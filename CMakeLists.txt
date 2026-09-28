@@ -70,7 +70,12 @@ if(ANDROID)
     # Name of the target created by the sibling third_party/libusb
     # (libusb_CMakeListForAndroid) submodule.
     set(LIBUSB_LIBRARIES libusb)
-    find_package(Threads REQUIRED)
+    # No find_package(Threads) here: bionic libc already provides pthread,
+    # nothing links Threads::Threads/CMAKE_THREAD_LIBS_INIT on this path,
+    # and calling it would pick up this project's own vendored
+    # cmake/Modules/FindThreads.cmake (appended to CMAKE_MODULE_PATH below
+    # for include(Version)), which does an unconditional TRY_RUN that
+    # breaks when cross-compiling.
 else()
     find_package(PkgConfig)
     find_package(LibUSB)
