@@ -66,41 +66,41 @@ endif()
 ########################################################################
 # Find build dependencies
 ########################################################################
-find_package(PkgConfig)
-find_package(LibUSB)
-set(THREADS_USE_PTHREADS_WIN32 true)
-find_package(Threads)
+if(ANDROID)
+    # Name of the target created by the sibling third_party/libusb
+    # (libusb_CMakeListForAndroid) submodule.
+    set(LIBUSB_LIBRARIES libusb)
+    find_package(Threads REQUIRED)
+else()
+    find_package(PkgConfig)
+    find_package(LibUSB)
+    set(THREADS_USE_PTHREADS_WIN32 true)
+    find_package(Threads)
 
-if(NOT LIBUSB_FOUND)
-    message(FATAL_ERROR "LibUSB 1.0 required to compile MiriSDR")
+    if(NOT LIBUSB_FOUND)
+        message(FATAL_ERROR "LibUSB 1.0 required to compile MiriSDR")
+    endif()
+
+    ########################################################################
+    # Setup the include and linker paths
+    ########################################################################
+    include_directories(
+        ${CMAKE_SOURCE_DIR}/include
+        ${LIBUSB_INCLUDE_DIR}
+    )
+
+    ########################################################################
+    # Create uninstall target
+    ########################################################################
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+    @ONLY)
+
+    add_custom_target(uninstall
+        ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
+    )
 endif()
-
-########################################################################
-# Setup the include and linker paths
-########################################################################
-include_directories(
-    ${CMAKE_SOURCE_DIR}/include
-    ${LIBUSB_INCLUDE_DIR}
-)
-
-#link_directories(
-#    ...
-#)
-
-# Set component parameters
-#set(INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include CACHE INTERNAL "" FORCE)
-
-########################################################################
-# Create uninstall target
-########################################################################
-configure_file(
-    ${CMAKE_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-@ONLY)
-
-add_custom_target(uninstall
-    ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake
-)
 
 
 ########################################################################
@@ -119,6 +119,11 @@ endif (DETACH_KERNEL_DRIVER)
 ########################################################################
 add_subdirectory(include)
 add_subdirectory(src)
+
+if(ANDROID)
+    message(STATUS "Android build: skipping desktop-only sections libmirisdr/")
+    return()
+endif()
 
 ########################################################################
 # Create Pkg Config File

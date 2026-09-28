@@ -24,14 +24,26 @@ add_library(mirisdr_shared SHARED
     libmirisdr.c
 )
 
-target_link_libraries(mirisdr_shared
-    ${LIBUSB_LIBRARIES}
-)
+if(ANDROID)
+    target_link_libraries(mirisdr_shared ${LIBUSB_LIBRARIES} android log)
+    target_include_directories(mirisdr_shared PUBLIC
+            ../include
+    )
+else()
+    target_link_libraries(mirisdr_shared
+        ${LIBUSB_LIBRARIES}
+    )
+endif()
 
 set_target_properties(mirisdr_shared PROPERTIES DEFINE_SYMBOL "mirisdr_EXPORTS")
 set_target_properties(mirisdr_shared PROPERTIES OUTPUT_NAME mirisdr)
 set_target_properties(mirisdr_shared PROPERTIES SOVERSION ${MAJOR_VERSION})
 set_target_properties(mirisdr_shared PROPERTIES VERSION ${LIBVER})
+
+if(ANDROID)
+    message(STATUS "Android build: skipping desktop-only sections libmirisdr/src")
+    return()
+endif()
 
 add_library(mirisdr_static STATIC
     libmirisdr.c
